@@ -1,4 +1,4 @@
-FROM ibisba/knime-base:latest
+FROM kamelmansouri/knime:4.1.2
 
 # Build argument for the workflow directory
 ONBUILD ARG WORKFLOW_DIR="workflow/"
@@ -6,11 +6,11 @@ ONBUILD ARG WORKFLOW_DIR="workflow/"
 ONBUILD ARG UPDATE_SITES
 
 # Create workflow directory and copy from host
-ONBUILD RUN mkdir -p /payload
-ONBUILD COPY $WORKFLOW_DIR /payload/workflow
+ONBUILD RUN mkdir -p /QSARready
+ONBUILD COPY $WORKFLOW_DIR /QSARready/workflow
 
 # Create metadata directory
-ONBUILD RUN mkdir -p /payload/meta
+ONBUILD RUN mkdir -p /QSARready/meta
 
 # Copy necessary scripts onto the image
 COPY getversion.py /scripts/getversion.py
@@ -22,24 +22,24 @@ COPY run.sh /scripts/run.sh
 RUN chmod +x /scripts/run.sh
 
 # Add KNIME update site and trusted community update site that fit the version the workflow was created with
-ONBUILD RUN full_version=$(python /scripts/getversion.py /payload/workflow/) \
-&& version=$(python /scripts/getversion.py /payload/workflow/ | awk '{split($0,a,"."); print a[1]"."a[2]}') \
-&& echo "http://update.knime.org/analytics-platform/$version" >> /payload/meta/updatesites \
-&& echo "http://update.knime.org/community-contributions/trusted/$version" >> /payload/meta/updatesites \
+ONBUILD RUN full_version=$(python /scripts/getversion.py /QSARready/workflow/) \
+&& version=$(python /scripts/getversion.py /QSARready/workflow/ | awk '{split($0,a,"."); print a[1]"."a[2]}') \
+&& echo "http://update.knime.org/analytics-platform/$version" >> /QSARready/meta/updatesites \
+&& echo "http://update.knime.org/community-contributions/trusted/$version" >> /QSARready/meta/updatesites \
 # Add user provided update sites
-&& echo $UPDATE_SITES | tr ',' '\n' >> /payload/meta/updatesites
+&& echo $UPDATE_SITES | tr ',' '\n' >> /QSARready/meta/updatesites
 
 # Save the workflow's variables in a file
-ONBUILD RUN find /payload/workflow -name settings.xml -exec python /scripts/listplugins.py {} \; | sort -u | awk '!a[$0]++' > /payload/meta/features
+ONBUILD RUN find /QSARready/workflow -name settings.xml -exec python /scripts/listplugins.py {} \; | sort -u | awk '!a[$0]++' > /QSARready/meta/features
 
-ONBUILD RUN python /scripts/listvariables.py /payload/workflow
+ONBUILD RUN python /scripts/listvariables.py /QSARready/workflow
 
 # Install required features
 ONBUILD RUN "$KNIME_DIR/knime" -application org.eclipse.equinox.p2.director \
--r "$(cat /payload/meta/updatesites | tr '\n' ',' | sed 's/,*$//' | sed 's/^,*//')" \
+-r "$(cat /QSARready/meta/updatesites | tr '\n' ',' | sed 's/,*$//' | sed 's/^,*//')" \
 -p2.arch x86_64 \
 -profileProperties org.eclipse.update.install.features=true \
--i "$(cat /payload/meta/features | tr '\n' ',' | sed 's/,*$//' | sed 's/^,*//')" \
+-i "$(cat /QSARready/meta/features | tr '\n' ',' | sed 's/,*$//' | sed 's/^,*//')" \
 -p KNIMEProfile \
 -nosplash
 
