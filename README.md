@@ -1,4 +1,4 @@
-# knime-workflow-base -- for QSAR-ready workflow Docker image using de.NBI/CIBI Nodes
+# knime-workflow-base -- for QSAR-ready workflow
 
 Docker imnage vailable at: https://hub.docker.com/r/kamelmansouri/knime-workflow-base
 
