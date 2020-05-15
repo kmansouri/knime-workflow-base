@@ -1,11 +1,8 @@
 #!/usr/bin/python
 """
 V1.2
-
 Modification in recurse:
 Recursion to old folders is made independent if found .knime data or not
-
-
 """
 
 import sys
