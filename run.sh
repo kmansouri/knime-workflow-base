@@ -7,13 +7,13 @@ args=()
 workflow=$1
 declare -i multi_wrk=0
 declare -i execute=1
-n=$(find /payload/workflow -name "dockermeta.knime" |wc -l)
+n=$(find /QSARready/workflow -name "dockermeta.knime" |wc -l)
 
 if [ "$workflow" = "--vars" ]; then
     echo "Workflow variables needed for executing the workflows:"
     echo "-----------------------------------------------------"
     while IFS=  read -r -d $'\0'; do
-      # Cut off the "/payload/workflow/" part because the user does not have to specify it.
+      # Cut off the "/QSARready/workflow/" part because the user does not have to specify it.
       if [ $n -gt 1 ]; then
         name="$(dirname ${REPLY#./workflow/})"
         echo "${name:18}"
@@ -21,7 +21,7 @@ if [ "$workflow" = "--vars" ]; then
       echo -e 'Name\tType\tDefault Value'
       cat "$REPLY" | tr ':' '\t'
       echo "========"
-    done < <(find "/payload/workflow" -name dockermeta.knime -print0)
+    done < <(find "/QSARready/workflow" -name dockermeta.knime -print0)
     execute=0
 elif [ "$workflow" = "--info" ]; then
     if [ $n -gt 1 ]; then
@@ -30,12 +30,12 @@ elif [ "$workflow" = "--info" ]; then
         while IFS=  read -r -d $'\0'; do
         name="$(dirname ${REPLY#./workflow/})"
         echo "${name:18}"
-        done < <(find "/payload/workflow" -name dockermeta.knime -print0)
+        done < <(find "/QSARready/workflow" -name dockermeta.knime -print0)
     fi
     echo "-----------------------------------------------------"
     echo "Installed features:"
     echo "-----------------------------------------------------"
-    cat /payload/meta/features
+    cat /QSARready/meta/features
     execute=0
 elif [ "$workflow" = "--help" ]; then
     echo "Help:"
@@ -72,7 +72,7 @@ elif [ $n -gt 1 ]; then
  multi_wrk=1 
  echo "Multiple workflows found."
  # Check if file exists
- if [[ $execute == 1 && ! -f "/payload/workflow/$workflow/dockermeta.knime" ]]
+ if [[ $execute == 1 && ! -f "/QSARready/workflow/$workflow/dockermeta.knime" ]]
  then
     >&2 echo "Workflow not found. Check the workflow name. Run the image with --info to see the contained workflows."
     n=0
@@ -88,9 +88,9 @@ if [[ $execute == 1 && $n -gt 0 ]] ; then
 	  value=$(echo $var | awk -F '=' '{print $2}')
 	  # Get the type from the meta file checking if its a single or a multiple workflow
 	  if [ $multi_wrk == 1 ] ; then
-	   type=$(cat /payload/workflow/$workflow/dockermeta.knime | grep $name | awk -F ':' '{print $2}')
+	   type=$(cat /QSARready/workflow/$workflow/dockermeta.knime | grep $name | awk -F ':' '{print $2}')
           else
-	   type=$(cat /payload/workflow/dockermeta.knime | grep $name | awk -F ':' '{print $2}')	
+	   type=$(cat /QSARready/workflow/dockermeta.knime | grep $name | awk -F ':' '{print $2}')	
 	  fi
 	  # Add argument to the array
 	  args=("${args[@]}" "-workflow.variable=$name,\"$value\",$type")
@@ -98,7 +98,7 @@ if [[ $execute == 1 && $n -gt 0 ]] ; then
     done
     # Call KNIME with the arguments
     WORKDIR="$(pwd)"
-    $KNIME_DIR/knime -configuration $WORKDIR/configuration -data $WORKDIR -user $WORKDIR -nosplash -nosave -application org.knime.product.KNIME_BATCH_APPLICATION \
-      -workflowDir="/payload/workflow/$workflow" \
+    $KNIME_DIR/knime -configuration $WORKDIR/configuration -data $WORKDIR -user $WORKDIR -nosplash -nosave -reset -application org.knime.product.KNIME_BATCH_APPLICATION \
+      -workflowDir="/QSARready/workflow/$workflow" \
       "${args[@]}"
 fi
